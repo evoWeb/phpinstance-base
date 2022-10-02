@@ -1,0 +1,88 @@
+version: '3.8'
+
+networks:
+  backend:
+  proxy:
+    external: true
+
+services:
+  app:
+    build:
+      context: container
+      dockerfile: php.Dockerfile
+      args:
+        PHP_VERSION: '${PHP_VERSION:-7.4}'
+    restart: unless-stopped
+    environment:
+      HTTP_PRODUCTION_DOMAIN: '${HTTP_PRODUCTION_DOMAIN}'
+      HTTP_STAGING_DOMAIN: '${HTTP_STAGING_DOMAIN}'
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${INSTANCE_FOLDER:-.}/data/htdocs:/usr/local/apache2/htdocs'
+      - '${INSTANCE_FOLDER:-.}/data/logs:/var/log/php'
+      - '${INSTANCE_FOLDER:-.}/config/php/z-custom.ini:/usr/local/etc/php/conf.d/z-custom.ini:ro'
+      - '${INSTANCE_FOLDER:-.}/config/php/production.conf:/usr/local/etc/php-fpm.d/production.conf:ro'
+      - '${INSTANCE_FOLDER:-.}/config/php/staging.conf:/usr/local/etc/php-fpm.d/staging.conf:ro'
+    networks:
+      - backend
+
+  db:
+    image: mariadb:10.9
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:${MYSQL_PORT:-3306}:3306'
+    environment:
+      APP_NAME: '${APP_NAME}'
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+      MYSQL_PRODUCTION_PASSWORD: '${MYSQL_PRODUCTION_PASSWORD}'
+      MYSQL_STAGING_PASSWORD: '${MYSQL_STAGING_PASSWORD}'
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${INSTANCE_FOLDER:-.}/data/mariadb:/var/lib/mysql'
+      - '${INSTANCE_FOLDER:-.}/config/mariadb/my.cnf:/etc/mysql/conf.d/my.cnf'
+      - '${INSTANCE_FOLDER:-.}/config/mariadb/healthcheck.cnf:/etc/mysql/healthcheck.cnf-notdefault:ro'
+      - '${INSTANCE_FOLDER:-.}/config/mariadb/init.sh:/docker-entrypoint-initdb.d/init.sh:ro'
+    healthcheck:
+      #test: ['CMD', '/usr/local/bin/healthcheck.sh', '--defaults-file=/etc/mysql/healthcheck.cnf-notdefault', '--connect', '--innodb_initialized']
+      test: ['CMD', 'mysql', '-h 127.0.0.1', '--user="root"', '--password="${MYSQL_ROOT_PASSWORD}"', '--execute="SELECT 1;"']
+      interval: 5s
+      retries: 5
+    networks:
+      - backend
+
+  webserver:
+    image: httpd:2.4-alpine
+    restart: unless-stopped
+    environment:
+      APP_NAME: '${APP_NAME}'
+      HTTP_PRODUCTION_DOMAIN: '${HTTP_PRODUCTION_DOMAIN}'
+      HTTP_PRODUCTION_ALIAS: '${HTTP_PRODUCTION_ALIAS}'
+      HTTP_PRODUCTION_ROOT: '${HTTP_PRODUCTION_ROOT:-production/current/public}'
+      HTTP_STAGING_DOMAIN: '${HTTP_STAGING_DOMAIN}'
+      HTTP_STAGING_ALIAS: '${HTTP_STAGING_ALIAS}'
+      HTTP_STAGING_ROOT: '${HTTP_STAGING_ROOT:-staging/current/public}'
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${INSTANCE_FOLDER:-.}/data/htdocs:/usr/local/apache2/htdocs'
+      - '${INSTANCE_FOLDER:-.}/data/logs:/usr/local/apache2/logs'
+      - '${INSTANCE_FOLDER:-.}/config/httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf'
+      - '${INSTANCE_FOLDER:-.}/config/httpd/production.conf:/usr/local/apache2/conf/extra/production.conf'
+      - '${INSTANCE_FOLDER:-.}/config/httpd/staging.conf:/usr/local/apache2/conf/extra/staging.conf'
+    depends_on:
+      - app
+      - db
+    networks:
+      - proxy
+      - backend
+    labels:
+      # common
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=proxy'
+
+      # production / staging
+      - 'traefik.http.routers.${APP_NAME}-https.entrypoints=https'
+      - 'traefik.http.routers.${APP_NAME}-https.rule=Host(`${HTTP_PRODUCTION_DOMAIN}`) || Host(`${HTTP_PRODUCTION_ALIAS}`) || Host(`${HTTP_STAGING_DOMAIN}`)'
+      - 'traefik.http.routers.${APP_NAME}-https.service=${APP_NAME}-http'
+      - 'traefik.http.routers.${APP_NAME}-https.tls.certresolver=http'
+      - 'traefik.http.services.${APP_NAME}-http.loadbalancer.server.port=80'
+      - 'traefik.http.services.${APP_NAME}-http.loadbalancer.server.scheme=http'
