@@ -56,10 +56,10 @@ services:
     environment:
       APP_NAME: '${APP_NAME}'
       HTTP_PRODUCTION_DOMAIN: '${HTTP_PRODUCTION_DOMAIN}'
-      HTTP_PRODUCTION_ALIAS: '${HTTP_PRODUCTION_ALIAS}'
+      HTTP_PRODUCTION_ALIAS: '${HTTP_PRODUCTION_ALIAS:-}'
       HTTP_PRODUCTION_ROOT: '${HTTP_PRODUCTION_ROOT:-production/current/public}'
       HTTP_STAGING_DOMAIN: '${HTTP_STAGING_DOMAIN}'
-      HTTP_STAGING_ALIAS: '${HTTP_STAGING_ALIAS}'
+      HTTP_STAGING_ALIAS: '${HTTP_STAGING_ALIAS:-}'
       HTTP_STAGING_ROOT: '${HTTP_STAGING_ROOT:-staging/current/public}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
@@ -81,7 +81,8 @@ services:
 
       # production / staging
       - 'traefik.http.routers.${APP_NAME}-https.entrypoints=https'
-      - 'traefik.http.routers.${APP_NAME}-https.rule=Host(`${HTTP_PRODUCTION_DOMAIN}`) || Host(`${HTTP_PRODUCTION_ALIAS}`) || Host(`${HTTP_STAGING_DOMAIN}`)'
+      # - 'traefik.http.routers.${APP_NAME}-https.rule=Host(`${HTTP_PRODUCTION_DOMAIN}`) || Host(`${HTTP_PRODUCTION_ALIAS}`) || Host(`${HTTP_STAGING_DOMAIN}`)'
+      - 'traefik.http.routers.${APP_NAME}-https.rule=Host(`${HTTP_PRODUCTION_DOMAIN}`) || Host(`${HTTP_STAGING_DOMAIN}`)'
       - 'traefik.http.routers.${APP_NAME}-https.service=${APP_NAME}-http'
       - 'traefik.http.routers.${APP_NAME}-https.tls.certresolver=http'
       - 'traefik.http.services.${APP_NAME}-http.loadbalancer.server.port=80'
