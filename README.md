@@ -49,4 +49,4 @@ HTTP_STAGING_DOMAIN=
 | HTTP_STAGING_ALIAS    | unset                     | domain         | Alias domain for staging site. Mostly its www.$HTTP_STAGING_DOMAIN       |
 | HTTP_STAGING_ROOT     | staging/current/public    | relative path  | Path to staging instance files                                           |
 | MYSQL_PORT            | 3306                      | port number    | Port to be bound on local ip 127.0.0.1:$MYSQL_PORT                       |
-| PHP_VERSION           | 8.1                       | version number | Version number so select what php version to install                     |
+| PHP_VERSION           | 7.4                       | version number | Version number so select what php version to install                     |

@@ -8,10 +8,8 @@ networks:
 services:
   app:
     build:
-      context: container
-      dockerfile: php.Dockerfile
-      args:
-        PHP_VERSION: '${PHP_VERSION:-7.4}'
+      context: context
+      dockerfile: php${PHP_VERSION:-7.4}.Dockerfile
     restart: unless-stopped
     environment:
       HTTP_PRODUCTION_DOMAIN: '${HTTP_PRODUCTION_DOMAIN}'

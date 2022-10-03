@@ -1,5 +1,4 @@
-ARG PHP_VERSION
-FROM php:${PHP_VERSION}-fpm
+FROM php:8.1-fpm
 USER root
 
 RUN groupmod -g 82 www-data \
@@ -9,6 +8,9 @@ RUN apt-get update -y \
     && apt-get -y install \
     locales \
     mariadb-client \
+    bzip2 \
+    libbz2-dev \
+    libcurl4-openssl-dev \
     graphicsmagick \
     libfreetype6 \
     libfreetype6-dev \
@@ -16,6 +18,7 @@ RUN apt-get update -y \
     libjpeg-dev \
     libpng-dev \
     libwebp-dev \
+    libonig-dev \
     libxml2 \
     libxml2-dev \
     unzip \
@@ -23,16 +26,26 @@ RUN apt-get update -y \
 RUN docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \
-        --with-webp \
-    && docker-php-ext-install gd intl mysqli pdo_mysql opcache soap zip
+        --with-webp
+RUN docker-php-ext-install \
+    bcmath \
+    bz2 \
+    gd \
+    intl \
+    mysqli \
+    opcache \
+    pdo_mysql \
+    soap \
+    zip
 RUN apt-get remove -y \
-        libfreetype6-dev \
-        libjpeg-dev \
-        libpng-dev \
-        libwebp-dev \
-        libxml2-dev \
-        libzip-dev \
-    && cp "${PHP_INI_DIR}/php.ini-production" "${PHP_INI_DIR}/php.ini" \
+    libbz2-dev \
+    libfreetype6-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    libxml2-dev \
+    libzip-dev
+RUN cp "${PHP_INI_DIR}/php.ini-production" "${PHP_INI_DIR}/php.ini" \
     && echo "de_DE.UTF-8 UTF-8\nen_US.UTF-8 UTF-8" > /etc/locale.gen \
     && locale-gen
 
