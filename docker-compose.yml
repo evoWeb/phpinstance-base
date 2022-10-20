@@ -34,6 +34,7 @@ services:
       MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
       MYSQL_PRODUCTION_PASSWORD: '${MYSQL_PRODUCTION_PASSWORD}'
       MYSQL_STAGING_PASSWORD: '${MYSQL_STAGING_PASSWORD}'
+      MYSQL_REPLICATION_PASSWORD: '${MYSQL_REPLICATION_PASSWORD}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${INSTANCE_FOLDER:-.}/data/mariadb:/var/lib/mysql'
