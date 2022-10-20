@@ -4,6 +4,13 @@ execute () {
   mysql --user="root" --password="${MYSQL_ROOT_PASSWORD}" --execute="$1"
 }
 
+if [ "${MYSQL_REPLICATION_PASSWORD}" ]; then
+  echo "*** Creating replication users"
+
+  execute "CREATE USER 'replication'@'%' IDENTIFIED BY '${MYSQL_REPLICATION_PASSWORD}';"
+  execute "GRANT REPLICATION SLAVE ON *.* TO 'replication'@'%';"
+fi
+
 echo "*** Creating ${APP_NAME}_production DB and users"
 
 execute "CREATE DATABASE \`${APP_NAME}_production\` CHARACTER SET utf8mb4;"
