@@ -37,7 +37,6 @@ services:
       - '/etc/localtime:/etc/localtime:ro'
       - '${INSTANCE_FOLDER:-.}/data/mariadb:/var/lib/mysql'
       - '${INSTANCE_FOLDER:-.}/config/mariadb/my.cnf:/etc/mysql/conf.d/my.cnf'
-      - '${INSTANCE_FOLDER:-.}/config/mariadb/healthcheck.cnf:/etc/mysql/healthcheck.cnf-notdefault:ro'
       - '${INSTANCE_FOLDER:-.}/config/mariadb/init.sh:/docker-entrypoint-initdb.d/init.sh:ro'
     healthcheck:
       test: ["CMD-SHELL", 'mysql --user="root" --password="${MYSQL_ROOT_PASSWORD}" --execute="SELECT 1;" || exit 1']
