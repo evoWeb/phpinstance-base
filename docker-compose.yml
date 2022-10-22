@@ -7,9 +7,7 @@ networks:
 
 services:
   app:
-    build:
-      context: context
-      dockerfile: php${PHP_VERSION:-7.4}.Dockerfile
+    image: evowebde/php:7.4
     restart: unless-stopped
     environment:
       HTTP_PRODUCTION_DOMAIN: '${HTTP_PRODUCTION_DOMAIN}'
@@ -42,8 +40,7 @@ services:
       - '${INSTANCE_FOLDER:-.}/config/mariadb/healthcheck.cnf:/etc/mysql/healthcheck.cnf-notdefault:ro'
       - '${INSTANCE_FOLDER:-.}/config/mariadb/init.sh:/docker-entrypoint-initdb.d/init.sh:ro'
     healthcheck:
-      #test: ['CMD', '/usr/local/bin/healthcheck.sh', '--defaults-file=/etc/mysql/healthcheck.cnf-notdefault', '--connect', '--innodb_initialized']
-      test: ['CMD', 'mysql', '-h 127.0.0.1', '--user="root"', '--password="${MYSQL_ROOT_PASSWORD}"', '--execute="SELECT 1;"']
+      test: ["CMD-SHELL", 'mysql --user="root" --password="${MYSQL_ROOT_PASSWORD}" --execute="SELECT 1;" || exit 1']
       interval: 5s
       retries: 5
     networks:
